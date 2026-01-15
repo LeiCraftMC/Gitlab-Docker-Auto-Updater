@@ -1,0 +1,12 @@
+services:
+  web:
+    image: 'gitlab/gitlab-ce:18.7.1-ce.0'
+    container_name: gitlab
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10M"
+        max-file: "3"
+    restart: always
+    ports:
+      - "7122:22"
