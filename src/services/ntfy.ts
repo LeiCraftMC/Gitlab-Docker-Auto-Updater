@@ -7,13 +7,13 @@ export class NtfyService {
         protected readonly authToken?: string
     ) {}
 
-    protected async sendNotification(title: string, message: string, type: "success" | "error"): Promise<void> {
+    protected async sendNotification(title: string, message: string, type: "success" | "warning" | "error"): Promise<void> {
         const response = await fetch(this.ntfyUrl, {
             method: "POST",
             headers: {
                 "Title": title,
                 "Priority": type === "success" ? "1" : "5",
-                "Tags": `gitlab-updater,${type === "success" ? "white_check_mark" : "x"}`,
+                "Tags": `gitlab-updater,${type === "success" ? "white_check_mark" : type === "warning" ? "warning" : "x"}`,
 
                 ...(this.authToken ? {
                     "Authorization": `Bearer ${this.authToken}`
@@ -29,6 +29,10 @@ export class NtfyService {
 
     async notifySuccess(message: string): Promise<void> {
         await this.sendNotification("Gitlab Update Successful", message, "success");
+    }
+
+    async notifyWarning(message: string): Promise<void> {
+        await this.sendNotification("Gitlab Update Warning", message, "warning");
     }
 
     async notifyError(message: string, logLines: string[]): Promise<void> {
