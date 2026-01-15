@@ -1,0 +1,16 @@
+{
+  "name": "gitlab-docker-auto-updater",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@cleverjs/cli": "^2.1.5",
+    "@cleverjs/utils": "^1.1.9"
+  }
+}
