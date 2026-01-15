@@ -8,6 +8,7 @@ export class NtfyService {
     ) {}
 
     protected async sendNotification(title: string, message: string, type: "success" | "warning" | "error"): Promise<void> {
+        
         const response = await fetch(this.ntfyUrl, {
             method: "POST",
             headers: {
@@ -22,7 +23,8 @@ export class NtfyService {
             body: message
         });
         if (!response.ok) {
-            throw new Error(`Failed to send notification: ${response.statusText}`);
+            Logger.error(`Failed to send notification: ${response.statusText}`);
+            return;
         }
         Logger.info("Notification sent successfully.");
     }

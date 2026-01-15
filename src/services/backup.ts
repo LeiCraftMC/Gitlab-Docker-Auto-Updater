@@ -5,11 +5,11 @@ export class BackupService {
 
     constructor(
         protected readonly backupBasePath: string,
-        protected readonly timestamp: string
+        protected readonly timestamp: number
     ) {}
 
     public getBackupPath(): string {
-        return `${this.backupBasePath}/backup-${this.timestamp}`;
+        return `${this.backupBasePath}/backup-${this.timestamp.toString()}`;
     }
 
     public async backupComposeFile(composeFilePath: string): Promise<void> {
@@ -60,7 +60,7 @@ export class BackupService {
         Logger.info("Creating Gitlab backup inside the Docker container...");
 
         const exec = Bun.spawn({
-            cmd: ["docker", "exec", "-t", dockerContainerName, "gitlab-backup", "create", `BACKUP=gitlab-auto-updater-backup-${this.timestamp}`],
+            cmd: ["docker", "exec", "-t", dockerContainerName, "gitlab-backup", "create", `BACKUP=gitlab-auto-updater-backup-${this.timestamp.toString()}`],
             stdout: "pipe",
             stderr: "pipe"
         });

@@ -1,6 +1,7 @@
 import { CLIBaseCommand, CLICommandArg, CLICommandArgParser, type CLICommandContext } from "@cleverjs/cli";
 import { NtfyService } from "./services/ntfy";
 import { Logger } from "./utils/logger";
+import { BackupService } from "./services/backup";
 
 const ARG_SPEC = CLICommandArg.defineCLIArgSpecs({
     flags: [
@@ -79,11 +80,22 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
         });
     }
 
+    private async handleCriticalError(ntfyService: NtfyService | null, error: string): Promise<never> {
+        Logger.critical("Critical error:", error);
+        if (ntfyService) {
+            await ntfyService.notifyError("Critical error occurred", Logger.getLogHistory());
+        }
+        process.exit(1);
+    }
+
     override async run(args: CLICommandArgParser.ParsedArgs<typeof ARG_SPEC>) {
         
         Logger.info("Starting Gitlab Docker Auto Updater...");
 
+        const timestamp = Date.now();
+
         let ntfyService: NtfyService | null = null;
+        let backupService: BackupService | null = null;
 
         if (args.flags["ntfy-url"]) {
             ntfyService = new NtfyService(
@@ -92,7 +104,28 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
             )
         }
 
-        
+        if (!args.flags["skip-backup"]) {
+
+            backupService = new BackupService(
+                args.flags["backup-dir"],
+                timestamp
+            );
+
+            try {
+                await backupService.performFullBackup({
+                    composeFilePath: args.flags["docker-compose-file"],
+                    dockerContainerName: args.flags["docker-container-name"],
+                    envFilePath: args.flags["gitlab-env-file"],
+                    gitlabBackupDir: args.flags["gitlab-backup-dir"]
+                });
+
+            } catch (error) {
+                await this.handleCriticalError(ntfyService, `Backup failed: ${Error.isError(error) ? error.message : error}`);
+            }
+
+        } else {
+            Logger.info("Skipping backup.");
+        }
 
 
     }

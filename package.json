@@ -10,7 +10,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cleverjs/cli": "^2.1.5",
+    "@cleverjs/cli": "^2.1.6",
     "@cleverjs/utils": "^1.1.9"
   }
 }
