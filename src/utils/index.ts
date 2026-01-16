@@ -15,41 +15,68 @@ export class Utils {
         const stdout = await execResult.stdout.text();
         const stderr = await execResult.stderr.text();
         if (execResult.exitCode !== 0) {
-            Logger.error(`Error getting current Gitlab version: ${stderr}`);
-            throw new Error(`Failed to get current Gitlab version from container ${dockerContainerName}`);
+            throw new Error(`Failed to get current Gitlab version from container ${dockerContainerName}, stderr: ${stderr}`);
         }
 
         const versionRegex = /^(\d+\.\d+\.\d+)$/;
         const match = stdout.trim().match(versionRegex);
         if (!match) {
-            Logger.error(`Unexpected version format: ${stdout.trim()}`);
-            throw new Error(`Unexpected version format received from container ${dockerContainerName}`);
+            throw new Error(`Unexpected version format received from container ${dockerContainerName}, stdout: ${stdout.trim()}`);
         }
         return match[1] as string;
     }
 
-    static async getLatestGitlabVersion(): Promise<string> {
-        const response = await fetch("https://gitlab.com/api/v4/projects/13083/releases");
+    static async getLatestSupportedGitlabVersions(): Promise<string[]> {
+        const response = await fetch("https://gitlab-com.gitlab.io/support/toolbox/upgrade-path/path.json");
 
         if (!response.ok) {
-            Logger.error(`Failed to fetch latest Gitlab version: ${response.statusText}`);
-            throw new Error("Failed to fetch latest Gitlab version");
+            throw new Error(`Failed to fetch latest Gitlab version, status: ${response.status} ${response.statusText}`);
         }
 
-        const latestReleases = await response.json() as Array<{ tag_name: string }>;
-        const latestRelease = latestReleases[0];
-        if (!latestRelease || !latestRelease.tag_name) {
-            Logger.error("No releases found in Gitlab API response");
-            throw new Error("No releases found in Gitlab API response");
+        const data = await response.json() as { supported: string[], all: string[] };
+
+        if (!data.supported) {
+            throw new Error("Invalid data format received from Gitlab upgrade path API");
+        }
+        // ensure newest versions are first
+        return data.supported.reverse();
+    }
+
+    static async getNextSafeGitlabUpgrade(
+        latestVersions: string[],
+        currentVersion: string
+    ): Promise<string | null> {
+
+        const parse = (v: string) => v.split(".").map(n => Number(n));
+        const [cMajor, cMinor, cPatch] = parse(currentVersion);
+
+        const sorted = latestVersions
+            .map(v => ({ v, p: parse(v) }))
+            .filter(({ p }) => p.length >= 3)
+            .sort((a, b) => {
+                for (let i = 0; i < 3; i++) {
+                    if (a.p[i] !== b.p[i]) return (b.p[i] as number) - (a.p[i] as number);
+                }
+                return 0;
+            });
+
+        for (const { v, p: [lMajor, lMinor, lPatch] } of sorted) {
+
+            // Major upgrades are never automatic
+            if (lMajor !== cMajor) continue;
+
+            // Same minor → patch upgrade
+            if (lMinor === cMinor && (lPatch as number) > (cPatch as number)) {
+                return v;
+            }
+
+            // Exactly one minor jump → safe
+            if (lMinor === (cMinor as number) + 1) {
+                return v;
+            }
         }
 
-        const versionRegex = /^v(\d+\.\d+\.\d+)$/;
-        const match = latestRelease.tag_name.trim().match(versionRegex)
-        if (!match) {
-            Logger.error(`Unexpected latest version format: ${latestRelease.tag_name}`);
-            throw new Error("Unexpected latest Gitlab version format received");
-        }
-        return match[1] as string;
+        return null;
     }
 
     static async replaceGitlabVersionInComposeFile(filePath: string, oldVersion: string, newVersion: string): Promise<void> {

@@ -28,9 +28,29 @@ describe("Utility Testing Suite", () => {
     });
 
     test("getLatestGitlabVersion returns a valid version string", async () => {
-        const latestVersion = await Utils.getLatestGitlabVersion();
+        const latestVersions = await Utils.getLatestGitlabVersions();
         const versionRegex = /^\d+\.\d+\.\d+$/;
-        expect(versionRegex.test(latestVersion)).toBe(true);
+        expect(versionRegex.test(latestVersions[0] as string)).toBe(true);
+    });
+
+    test("isUpgradeDoable correctly compares versions", () => {
+
+        const versions = [
+            "18.8.0",
+            "18.7.0",
+            "18.6.0",
+        ]
+
+        expect(Utils.isUpgradeDoable("18.7.1", "18.8.0")).toBe(true);
+        expect(Utils.isUpgradeDoable("18.8.0", "18.7.1")).toBe(false);
+        expect(Utils.isUpgradeDoable("18.7.1", "18.7.1")).toBe(false);
+        expect(Utils.isUpgradeDoable("18.7.9", "18.8.0")).toBe(true);
+        expect(Utils.isUpgradeDoable("18.9.0", "19.0.0")).toBe(true);
+        
+        // case with major version change
+        expect(Utils.isUpgradeDoable("16.9.0", "18.0.0")).toBe(false);
+        expect(Utils.isUpgradeDoable("16.0.0", "18.0.0")).toBe(false);
+
     });
 
 });
