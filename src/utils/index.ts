@@ -121,4 +121,39 @@ export class Utils {
         await Bun.write(filePath, updated);
     }
 
+    static async pullGitlabDockerImage(version: string): Promise<void> {
+
+        const imageName = `gitlab/gitlab-ce:${version}-ce.0`;
+
+        Logger.info(`Pulling Gitlab Docker image for version ${version}`);
+
+        const pullProcess = Bun.spawn({
+            cmd: ["docker", "pull", imageName],
+            stdout: "pipe",
+            stderr: "pipe"
+        });
+
+        const stdout = await pullProcess.stdout.text();
+        const stderr = await pullProcess.stderr.text();
+
+        if (pullProcess.exitCode !== 0) {
+            throw new Error(`Failed to pull Docker image ${imageName}, stderr: ${stderr}, stdout: ${stdout}`);
+        }
+
+        Logger.info(`Successfully pulled Docker image: ${imageName}`);
+
+    }
+
+    static async checkGitlabHealth(dockerContainerName: string): Promise<boolean> {
+
+        const healthCheck = await Bun.$`docker inspect --format='{{.State.Health.Status}}' ${dockerContainerName}`.text();
+
+        if (healthCheck.trim().toLowerCase().includes("healthy")) {
+            return true;
+        }
+
+        return false;
+
+    }
+
 }

@@ -2,6 +2,8 @@ import { CLIBaseCommand, CLICommandArg, CLICommandArgParser, type CLICommandCont
 import { NtfyService } from "./services/ntfy";
 import { Logger } from "./utils/logger";
 import { BackupService } from "./services/backup";
+import { UpdateService } from "./services/update";
+import { Utils } from "./utils";
 
 const ARG_SPEC = CLICommandArg.defineCLIArgSpecs({
     flags: [
@@ -104,6 +106,48 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
             )
         }
 
+        const updateService = new UpdateService(
+            args.flags["docker-container-name"],
+            args.flags["docker-compose-file"]
+        );
+
+        let currentVersion: string;
+        let targetVersion: string;
+
+        try {
+
+            currentVersion = await Utils.getCurrentGitlabVersionFromContainer(args.flags["docker-container-name"]);
+
+            const updateCheckResult = await updateService.checkUpdateCanBePerformed(
+                currentVersion
+            );
+
+            if (updateCheckResult.status === "NO_SAFE_UPGRADE_PATH") {
+                await ntfyService?.notifyWarning(`No safe upgrade path found from version ${currentVersion}. Update cannot be performed.`);
+                return;
+            }
+
+            if (updateCheckResult.status === "ALREADY_LATEST_VERSION") {
+                await ntfyService?.notifySuccess(`Gitlab is already at the latest supported version (${currentVersion}). No update needed.`);
+                return;
+            }
+
+            if (updateCheckResult.status === "UPDATE_POSSIBLE" && updateCheckResult.targetVersion) {
+
+                Logger.info(`Update available: ${currentVersion} -> ${updateCheckResult.targetVersion}`);
+
+                targetVersion = updateCheckResult.targetVersion;
+            } else {
+                throw new Error("Unexpected update check result");
+            }
+
+        } catch (error) {
+            await this.handleCriticalError(ntfyService, `Update check failed: ${Error.isError(error) ? error.message : error}`);
+            return;
+        }
+
+
+
         if (!args.flags["skip-backup"]) {
 
             backupService = new BackupService(
@@ -127,6 +171,32 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
             Logger.info("Skipping backup.");
         }
 
+
+        try {
+            await updateService.performUpdate(
+                currentVersion,
+                targetVersion
+            );
+
+            Logger.info(`Gitlab updated successfully to version ${targetVersion}.`);
+
+            await ntfyService?.notifySuccess(`Gitlab updated successfully from version ${currentVersion} to ${targetVersion}.`);
+        } catch (error) {
+            await this.handleCriticalError(ntfyService, `Update failed: ${Error.isError(error) ? error.message : error}`);
+        }
+
+        if (args.flags["delete-old-backups"] > 0 && backupService) {
+
+            try {
+                await backupService.deleteBackupsOlderThanDays(args.flags["delete-old-backups"]);
+            } catch (error) {
+                await this.handleCriticalError(ntfyService, `Failed to delete old backups: ${Error.isError(error) ? error.message : error}`);
+            }
+
+        }
+
+        Logger.info("Gitlab Docker Auto Updater finished.");
+        await ntfyService?.notifySuccess("Gitlab Docker Auto Updater finished successfully.");
 
     }
 
