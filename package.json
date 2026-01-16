@@ -1,16 +1,20 @@
 {
-  "name": "gitlab-docker-auto-updater",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@cleverjs/cli": "^2.1.6",
-    "@cleverjs/utils": "^1.1.9"
-  }
+    "name": "gitlab-docker-auto-updater",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+		"test": "bun test",
+		"compile": "bun run ./scripts/compile"
+	},
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@cleverjs/cli": "^2.2.0",
+        "@cleverjs/utils": "^1.1.9"
+    }
 }

@@ -124,12 +124,12 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
 
             if (updateCheckResult.status === "NO_SAFE_UPGRADE_PATH") {
                 await ntfyService?.notifyWarning(`No safe upgrade path found from version ${currentVersion}. Update cannot be performed.`);
-                return;
+                return false;
             }
 
             if (updateCheckResult.status === "ALREADY_LATEST_VERSION") {
                 await ntfyService?.notifySuccess(`Gitlab is already at the latest supported version (${currentVersion}). No update needed.`);
-                return;
+                return false;
             }
 
             if (updateCheckResult.status === "UPDATE_POSSIBLE" && updateCheckResult.targetVersion) {
@@ -143,7 +143,7 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
 
         } catch (error) {
             await this.handleCriticalError(ntfyService, `Update check failed: ${Error.isError(error) ? error.message : error}`);
-            return;
+            return false;
         }
 
 
@@ -165,7 +165,7 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
 
             } catch (error) {
                 await this.handleCriticalError(ntfyService, `Backup failed: ${Error.isError(error) ? error.message : error}`);
-                return;
+                return false;
             }
 
         } else {
@@ -183,7 +183,7 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
 
         } catch (error) {
             await this.handleCriticalError(ntfyService, `Update failed: ${Error.isError(error) ? error.message : error}`);
-            return
+            return false;
         }
 
         if (args.flags["delete-old-backups"] > 0 && backupService) {
@@ -192,14 +192,14 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
                 await backupService.deleteBackupsOlderThanDays(args.flags["delete-old-backups"]);
             } catch (error) {
                 await this.handleCriticalError(ntfyService, `Failed to delete old backups: ${Error.isError(error) ? error.message : error}`);
-                return;
+                return false;
             }
 
         }
 
         Logger.info("Gitlab Docker Auto Updater finished.");
         await ntfyService?.notifySuccess("Gitlab Docker Auto Updater finished successfully.");
-
+        return true;
     }
 
 }
