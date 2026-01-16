@@ -17,7 +17,7 @@ export class Utils {
         const stderr = await execResult.stderr.text();
         
         if (execResult.exitCode !== 0) {
-            throw new Error(`Failed to get current Gitlab version from container ${dockerContainerName}, stderr: ${stderr}`);
+            throw new Error(`Failed to get current Gitlab version from container ${dockerContainerName}, stderr: ${stderr}, stdout: ${stdout}`);
         }
 
         const versionRegex = /^(\d+\.\d+\.\d+)$/;
