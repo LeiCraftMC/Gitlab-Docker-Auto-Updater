@@ -42,42 +42,65 @@ export class Utils {
         return data.supported.reverse();
     }
 
-    static async getNextSafeGitlabUpgrade(
-        latestVersions: string[],
+    /**
+     * 
+     * @param supportedVersions List of currently supported versions. Newest first
+     * @param currentVersion The Current Version
+     * @returns Next Version you can safly upgrade to or null. If you already on the newest version it will just echo it
+     */
+    static getNextSafeGitlabUpgrade(
+        supportedVersions: string[],
         currentVersion: string
-    ): Promise<string | null> {
+    ): string | null {
 
-        const parse = (v: string) => v.split(".").map(n => Number(n));
-        const [cMajor, cMinor, cPatch] = parse(currentVersion);
+        if (supportedVersions[0] === currentVersion) {
+            return currentVersion;
+        }
 
-        const sorted = latestVersions
+           const parse = (v: string) => v.split(".").map(Number);
+
+        const cmp = (a: number[], b: number[]): number => {
+            for (let i = 0; i < 3; i++) {
+                if (a[i] !== b[i]) return a[i] - b[i];
+            }
+            return 0;
+        };
+
+        const current = parse(currentVersion);
+
+        // same-major supported versions, sorted ascending
+        const sameMajor = supportedVersions
             .map(v => ({ v, p: parse(v) }))
-            .filter(({ p }) => p.length >= 3)
-            .sort((a, b) => {
-                for (let i = 0; i < 3; i++) {
-                    if (a.p[i] !== b.p[i]) return (b.p[i] as number) - (a.p[i] as number);
-                }
-                return 0;
-            });
+            .filter(x => x.p[0] === current[0])
+            .sort((a, b) => cmp(a.p, b.p));
 
-        for (const { v, p: [lMajor, lMinor, lPatch] } of sorted) {
+        if (sameMajor.length === 0) return null;
 
-            // Major upgrades are never automatic
-            if (lMajor !== cMajor) continue;
+        const latest = sameMajor[sameMajor.length - 1];
 
-            // Same minor → patch upgrade
-            if (lMinor === cMinor && (lPatch as number) > (cPatch as number)) {
-                return v;
+        // already latest
+        if (cmp(current, latest.p) >= 0) {
+            return latest.v;
+        }
+
+        // find the highest supported version <= current
+        let floorIndex = -1;
+        for (let i = 0; i < sameMajor.length; i++) {
+            if (cmp(sameMajor[i].p, current) <= 0) {
+                floorIndex = i;
             }
+        }
 
-            // Exactly one minor jump → safe
-            if (lMinor === (cMinor as number) + 1) {
-                return v;
-            }
+        if (floorIndex === -1) return null;
+
+        // exactly one hop to latest?
+        if (floorIndex === sameMajor.length - 2) {
+            return latest.v;
         }
 
         return null;
     }
+
 
     static async replaceGitlabVersionInComposeFile(filePath: string, oldVersion: string, newVersion: string): Promise<void> {
         const file = await Bun.file(filePath);

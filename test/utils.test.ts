@@ -28,29 +28,52 @@ describe("Utility Testing Suite", () => {
     });
 
     test("getLatestGitlabVersion returns a valid version string", async () => {
-        const latestVersions = await Utils.getLatestGitlabVersions();
+        const latestVersions = await Utils.getLatestSupportedGitlabVersions();
         const versionRegex = /^\d+\.\d+\.\d+$/;
         expect(versionRegex.test(latestVersions[0] as string)).toBe(true);
     });
 
     test("isUpgradeDoable correctly compares versions", () => {
 
-        const versions = [
-            "18.8.0",
-            "18.7.0",
-            "18.6.0",
-        ]
+        const supportedVersions = ["17.1.8","17.3.7","17.5.5","17.8.7","17.11.7","18.2.8","18.5.5","18.8.0"].reverse();
 
-        expect(Utils.isUpgradeDoable("18.7.1", "18.8.0")).toBe(true);
-        expect(Utils.isUpgradeDoable("18.8.0", "18.7.1")).toBe(false);
-        expect(Utils.isUpgradeDoable("18.7.1", "18.7.1")).toBe(false);
-        expect(Utils.isUpgradeDoable("18.7.9", "18.8.0")).toBe(true);
-        expect(Utils.isUpgradeDoable("18.9.0", "19.0.0")).toBe(true);
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.5.5")).toBe("18.8.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.5.6")).toBe("18.8.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.6.0")).toBe("18.8.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.7.0")).toBe("18.8.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.7.1")).toBe("18.8.0");
+
+        // already latest
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.8.0")).toBe("18.8.0");
+
+        // cant be done in one step
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.2.8")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "17.11.7")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "17.8.7")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "17.5.4")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "16.12.0")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "19.0.0")).toBeNull();
+
         
-        // case with major version change
-        expect(Utils.isUpgradeDoable("16.9.0", "18.0.0")).toBe(false);
-        expect(Utils.isUpgradeDoable("16.0.0", "18.0.0")).toBe(false);
 
+        const supportedVersions2 = ["18.8.0", "19.0.0"].reverse();
+
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions2, "18.8.5")).toBe("19.0.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions2, "18.8.6")).toBe("19.0.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions2, "18.9.0")).toBe("19.0.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions2, "18.9.0")).toBe("19.0.0");
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions2, "18.9.1")).toBe("19.0.0");
+
+        // already latest
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions2, "19.0.0")).toBe("19.0.0");
+
+        // cant be done in one step
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "18.2.8")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "17.11.7")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "17.8.7")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "17.5.4")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "16.12.0")).toBeNull();
+        expect(Utils.getNextSafeGitlabUpgrade(supportedVersions, "20.0.0")).toBeNull();
     });
 
 });
