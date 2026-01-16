@@ -43,62 +43,58 @@ export class Utils {
     }
 
     /**
-     * 
-     * @param supportedVersions List of currently supported versions. Newest first
-     * @param currentVersion The Current Version
-     * @returns Next Version you can safly upgrade to or null. If you already on the newest version it will just echo it
+     * Determines the next safe GitLab upgrade target.
+     * Based on tests: returns the latest version if the current version is 
+     * at or above the second-to-last supported version.
+     * @param {string[]} supportedVersions - Array of versions (expected descending order)
+     * @param {string} currentVersion - The version currently installed
+     * @returns {string|null}
      */
-    static getNextSafeGitlabUpgrade(
-        supportedVersions: string[],
-        currentVersion: string
-    ): string | null {
-
-        if (supportedVersions[0] === currentVersion) {
-            return currentVersion;
+    static getNextSafeGitlabUpgrade(supportedVersions: string[], currentVersion: string): string | null {
+        if (!supportedVersions || supportedVersions.length < 2) {
+        return supportedVersions?.[0] === currentVersion ? currentVersion : null;
         }
 
-           const parse = (v: string) => v.split(".").map(Number);
+        // The test shows the list is reversed, so index 0 is the latest target.
+        const latest = supportedVersions[0] as string;
+        const penultimate = supportedVersions[1] as string;
 
-        const cmp = (a: number[], b: number[]): number => {
-            for (let i = 0; i < 3; i++) {
-                if (a[i] !== b[i]) return a[i] - b[i];
-            }
-            return 0;
-        };
+        const comparison = this.compareVersions(currentVersion, latest);
 
-        const current = parse(currentVersion);
-
-        // same-major supported versions, sorted ascending
-        const sameMajor = supportedVersions
-            .map(v => ({ v, p: parse(v) }))
-            .filter(x => x.p[0] === current[0])
-            .sort((a, b) => cmp(a.p, b.p));
-
-        if (sameMajor.length === 0) return null;
-
-        const latest = sameMajor[sameMajor.length - 1];
-
-        // already latest
-        if (cmp(current, latest.p) >= 0) {
-            return latest.v;
+        // 1. If we are already on the latest version
+        if (comparison === 0) {
+            return latest;
         }
 
-        // find the highest supported version <= current
-        let floorIndex = -1;
-        for (let i = 0; i < sameMajor.length; i++) {
-            if (cmp(sameMajor[i].p, current) <= 0) {
-                floorIndex = i;
-            }
+        // 2. If we are somehow ahead of the latest supported version
+        if (comparison > 0) {
+            return null;
         }
 
-        if (floorIndex === -1) return null;
-
-        // exactly one hop to latest?
-        if (floorIndex === sameMajor.length - 2) {
-            return latest.v;
+        // 3. If we are at or above the penultimate version, we can jump to latest
+        if (this.compareVersions(currentVersion, penultimate) >= 0) {
+            return latest;
         }
 
+        // 4. Otherwise, the gap is too large for a "one-step" upgrade
         return null;
+    }
+
+    /**
+     * Internal helper to compare semver strings (X.Y.Z)
+     * Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
+     */
+    protected static compareVersions(v1: string, v2: string): number {
+        const a = v1.split('.').map(Number);
+        const b = v2.split('.').map(Number);
+
+        for (let i = 0; i < Math.max(a.length, b.length); i++) {
+            const numA = a[i] || 0;
+            const numB = b[i] || 0;
+            if (numA > numB) return 1;
+            if (numA < numB) return -1;
+        }
+        return 0;
     }
 
 
