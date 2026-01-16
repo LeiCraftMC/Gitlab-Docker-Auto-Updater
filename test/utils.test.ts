@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { Utils } from "../src/utils/îndex";
+import { Utils } from "../src/utils";
 
 describe("Utility Testing Suite", () => {
 
@@ -26,5 +26,12 @@ describe("Utility Testing Suite", () => {
         expect(revertedContent).toBe(oldContent);
 
     });
+
+    test("getLatestGitlabVersion returns a valid version string", async () => {
+        const latestVersion = await Utils.getLatestGitlabVersion();
+        const versionRegex = /^\d+\.\d+\.\d+$/;
+        expect(versionRegex.test(latestVersion)).toBe(true);
+    });
+
 });
 
