@@ -12,7 +12,7 @@ class CompilerCommand {
     public sourcemap = true;
     public minify = true;
     public entrypoint = "./src/index.ts";
-    public outfile = "./build/bin/gitlab-auto-updater";
+    public outfile = "./build/bin/gitlab-docker-auto-updater";
     public platform: PlatformArg = "auto";
     public env: NodeJS.ProcessEnv = {};
     private additionalArgs: string[] = [];
