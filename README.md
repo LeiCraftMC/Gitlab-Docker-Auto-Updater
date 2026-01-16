@@ -3,12 +3,12 @@
 ## Install
 Execute as root
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/LeiCraftMC/LCMC-Hosting-VM-Net/refs/heads/master/scripts/bash/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/LeiCraftMC/Gitlab-Docker-Auto-Updater/refs/heads/main/scripts/bash/install.sh)
 ```
 ## Uninstall
 Execute as root
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/LeiCraftMC/LCMC-Hosting-VM-Net/refs/heads/master/scripts/bash/uninstall.sh)
+bash <(curl -s https://raw.githubusercontent.com/LeiCraftMC/Gitlab-Docker-Auto-Updater/refs/heads/main/scripts/bash/uninstall.sh)
 ```
 
 
