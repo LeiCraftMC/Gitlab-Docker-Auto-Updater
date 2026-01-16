@@ -6,14 +6,16 @@ export class Utils {
     static async getCurrentGitlabVersionFromContainer(dockerContainerName: string): Promise<string> {
         const execResult = await Bun.spawn({
             cmd: [
-                "docker", "exec", "-t", dockerContainerName,
-                "cat", "/opt/gitlab/version-manifest.txt", "|", "head", "-n", "1", "|", "awk", "'{print $2}'"
+                "docker", "exec", "-t", dockerContainerName, "sh", "-c", 
+                "cat /opt/gitlab/version-manifest.txt | head -n 1 | awk '{print $2}'"
             ],
             stderr: "pipe",
             stdout: "pipe"
         });
+
         const stdout = await execResult.stdout.text();
         const stderr = await execResult.stderr.text();
+        
         if (execResult.exitCode !== 0) {
             throw new Error(`Failed to get current Gitlab version from container ${dockerContainerName}, stderr: ${stderr}`);
         }

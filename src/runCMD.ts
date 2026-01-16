@@ -61,7 +61,7 @@ const ARG_SPEC = CLICommandArg.defineCLIArgSpecs({
 
         {
             name: "ntfy-url",
-            description: "URL for ntfy notifications. If not provided, notifications will be sent",
+            description: "URL for ntfy notifications. If not provided, notifications will not be sent",
             type: "string"
         },
         {
@@ -165,6 +165,7 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
 
             } catch (error) {
                 await this.handleCriticalError(ntfyService, `Backup failed: ${Error.isError(error) ? error.message : error}`);
+                return;
             }
 
         } else {
@@ -180,9 +181,9 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
 
             Logger.info(`Gitlab updated successfully to version ${targetVersion}.`);
 
-            await ntfyService?.notifySuccess(`Gitlab updated successfully from version ${currentVersion} to ${targetVersion}.`);
         } catch (error) {
             await this.handleCriticalError(ntfyService, `Update failed: ${Error.isError(error) ? error.message : error}`);
+            return
         }
 
         if (args.flags["delete-old-backups"] > 0 && backupService) {
@@ -191,6 +192,7 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
                 await backupService.deleteBackupsOlderThanDays(args.flags["delete-old-backups"]);
             } catch (error) {
                 await this.handleCriticalError(ntfyService, `Failed to delete old backups: ${Error.isError(error) ? error.message : error}`);
+                return;
             }
 
         }

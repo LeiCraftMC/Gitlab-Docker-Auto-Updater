@@ -65,21 +65,21 @@ export class BackupService {
             stderr: "pipe"
         });
 
-        void (async () => {
+        const stdoutPromise = (async () => {
             for await (const chunk of exec.stdout!) {
                 const text = new TextDecoder().decode(chunk);
                 Logger.info(`[Gitlab Backup] ${text.trim()}`);
             }
         })();
         
-        void (async () => {
+        const stderrPromise = (async () => {
             for await (const chunk of exec.stderr!) {
                 const text = new TextDecoder().decode(chunk);
                 Logger.error(`[Gitlab Backup ERROR] ${text.trim()}`);
             }
         })();
 
-        await exec.exited;
+        await Promise.all([stdoutPromise, stderrPromise, exec.exited]);
 
         if (exec.exitCode !== 0) {
             throw new Error(`Gitlab backup command failed with exit code ${exec.exitCode}`);
