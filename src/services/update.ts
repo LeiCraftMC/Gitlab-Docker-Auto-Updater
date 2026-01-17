@@ -93,8 +93,8 @@ export class UpdateService {
         await this.reDeployGitlab();
 
         // wait a bit before checking health
-        Logger.info("Waiting 30 seconds before checking Gitlab health...");
-        await Delay.wait(30_000);
+        Logger.info("Waiting 60 seconds before checking Gitlab health...");
+        await Delay.wait(60_000);
 
         for (let attempt = 1; attempt <= 10; attempt++) {
             Logger.info(`Checking Gitlab health (Attempt ${attempt}/10)...`);
@@ -103,8 +103,8 @@ export class UpdateService {
                 Logger.info("Gitlab is healthy after update.");
                 return;
             }
-            Logger.warn("Gitlab is not healthy yet. Waiting 30 seconds before retrying...");
-            await Delay.wait(30_000);
+            Logger.warn("Gitlab is not healthy yet. Waiting 60 seconds before retrying...");
+            await Delay.wait(60_000);
         }
         throw new Error("Gitlab did not become healthy after update within the expected time.");
 
