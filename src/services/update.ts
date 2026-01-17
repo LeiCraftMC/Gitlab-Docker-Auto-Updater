@@ -19,10 +19,12 @@ export class UpdateService {
             stderr: "pipe"
         });
 
+        const downProcessexitCode = await downProcess.exited;
+
         const downStdout = await downProcess.stdout.text();
         const downStderr = await downProcess.stderr.text();
 
-        if (downProcess.exitCode !== 0) {
+        if (downProcessexitCode !== 0) {
             throw new Error(`Failed to bring down Gitlab container, stderr: ${downStderr}, stdout: ${downStdout}`);
         }
 
@@ -34,10 +36,12 @@ export class UpdateService {
             stderr: "pipe"
         });
 
+        const upProcessexitCode = await upProcess.exited;
+
         const upStdout = await upProcess.stdout.text();
         const upStderr = await upProcess.stderr.text();
 
-        if (upProcess.exitCode !== 0) {
+        if (upProcessexitCode !== 0) {
             throw new Error(`Failed to bring up Gitlab container, stderr: ${upStderr}, stdout: ${upStdout}`);
         }
 

@@ -13,7 +13,15 @@ export class Utils {
             stdout: "pipe"
         });
 
+        const exitCode = await execResult.exited;
+
         const stdout = await execResult.stdout.text();
+        const stderr = await execResult.stderr.text();
+
+
+        if (exitCode !== 0) {
+            throw new Error(`Failed to get current Gitlab version from container ${dockerContainerName}, stderr: ${stderr}`);
+        }
 
         const versionRegex = /^(\d+\.\d+\.\d+)$/;
         const match = stdout.trim().match(versionRegex);
@@ -130,10 +138,12 @@ export class Utils {
             stderr: "pipe"
         });
 
+        const exitCode = await pullProcess.exited;
+
         const stdout = await pullProcess.stdout.text();
         const stderr = await pullProcess.stderr.text();
 
-        if (pullProcess.exitCode !== 0) {
+        if (exitCode !== 0) {
             throw new Error(`Failed to pull Docker image ${imageName}, stderr: ${stderr}, stdout: ${stdout}`);
         }
 

@@ -81,7 +81,9 @@ export class BackupService {
 
         await Promise.all([stdoutPromise, stderrPromise, exec.exited]);
 
-        if (exec.exitCode !== 0) {
+        const exitCode = await exec.exited;
+
+        if (exitCode !== 0) {
             throw new Error(`Gitlab backup command failed with exit code ${exec.exitCode}`);
         }
         
