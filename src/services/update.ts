@@ -92,6 +92,10 @@ export class UpdateService {
 
         await this.reDeployGitlab();
 
+        // wait a bit before checking health
+        Logger.info("Waiting 30 seconds before checking Gitlab health...");
+        await Delay.wait(30_000);
+
         for (let attempt = 1; attempt <= 10; attempt++) {
             Logger.info(`Checking Gitlab health (Attempt ${attempt}/10)...`);
             const isHealthy = await Utils.checkGitlabHealth(this.dockerContainerName);
