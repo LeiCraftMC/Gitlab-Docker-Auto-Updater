@@ -4,9 +4,9 @@
     "type": "module",
     "private": true,
     "scripts": {
-		"test": "bun test",
-		"compile": "bun run ./scripts/compile"
-	},
+        "test": "bun test",
+        "compile": "bun run ./scripts/compile"
+    },
     "devDependencies": {
         "@types/bun": "latest"
     },
@@ -14,7 +14,7 @@
         "typescript": "^5"
     },
     "dependencies": {
-        "@cleverjs/cli": "^2.2.0",
+        "@cleverjs/cli": "^2.3.0",
         "@cleverjs/utils": "^1.1.9"
     }
 }
