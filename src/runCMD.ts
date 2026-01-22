@@ -198,7 +198,7 @@ export class RunCommand extends CLIBaseCommand<typeof ARG_SPEC> {
         }
 
         Logger.info("Gitlab Docker Auto Updater finished.");
-        await ntfyService?.notifySuccess("Gitlab Docker Auto Updater finished successfully.");
+        await ntfyService?.notifySuccess(`Gitlab Docker Auto Updater finished successfully. ${currentVersion} -> ${targetVersion}`);
         return true;
     }
 
